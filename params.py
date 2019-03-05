@@ -18,7 +18,7 @@ T_fric = 0.00099 # motor friction torque
 eta_g = 0.803  # estimated gearbox efficiency, from gears lab
 
 # Geometry
-r_shaft = 0.004  # [m] spooling shaft radius
+r_shaft = 0.002  # [m] spooling shaft radius
 l = 0.109  # [m] leg length
 
 # Assorted

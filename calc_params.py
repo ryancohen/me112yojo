@@ -73,41 +73,38 @@ def run_dynamics_anal():
     y = np.nan*np.zeros(n_sim)
     F_N = np.nan*np.zeros(n_sim)
     P_in = np.nan*np.zeros(n_sim)
+    P_out = np.nan*np.zeros(n_sim)
 
     theta[0] = theta_0
     y[0] = 2*params.l*np.sin(np.radians(theta_0))
     F_N[0] = 0
     P_in[0] = 0
+    P_out[0] = 0
 
     for index in range(n_sim - 1):
         if theta[index] <= 0:
             raise Exception("Robot finished loading " + str(params.t - t[index]) + " seconds too early.")
+        if index == 1509:
+            pdb.set_trace()
         F_t = calc_vertical_force(theta[index])
         T_m = calc_motor_torque(F_t)
         w_m = calc_motor_speed(T_m)
         P_in[index + 1] = calc_motor_power_in(T_m)
+        P_out[index + 1] = T_m * w_m
         dy_dt = calc_loading_speed(w_m)
         dy = dy_dt * dt
         y[index + 1] = y[index] - dy
         theta[index + 1] = np.degrees(np.arcsin(y[index + 1]/(2*params.l)))
         F_N[index+1] = F_t  # F_T on loading is same as F_N on release
 
-    pdb.set_trace()
     print "The angle when fully loaded is " + str(theta[-1]) + " degrees."
-    print "The average motor power is " + str(np.average(P_in)) + " watts."
-    print "The maximum tensile force is " + str(np.nanmax(F_N))
+    print "The average battery power is " + str(np.average(P_in)) + " watts."
+    print "The peak battery power is " + str(np.nanmax(P_in)) + " watts."
+    print "The maximum tensile force is " + str(np.nanmax(F_N)) + "N."
+    print "The peak motor output power is " + str(np.nanmax(P_out)) + " watts, and occurs at t = " + str(t[np.argmax(P_out)]) + "s."
 
-    #Unloading
-    # theta_unload = np.linspace(theta[-1], theta[0], n_sim)
-    # F_N = np.nan*np.zeros(n_sim)
-    # y_unload = np.nan*np.zeros(n_sim)
-    #
-    # for index in range(n_sim - 1):
-    #     pass
-        # this is just calculating loading down and then the same thing back up
     return -np.trapz(F_N, y)
-    # TODO account for losses in upwards collision as it jumps
-    # TODO choose gearbox ratio
+    # TODO account for losses in upwards collision and joints as it jumps
 
 
 
@@ -119,7 +116,7 @@ if __name__ == '__main__':
         k_s = 760.05  # [N/m] spring constant
         theta_0 = calc_angle_from_spring_length(0.127)  # [degrees]
         N = 196.7
-        print run_dynamics_anal()
+        print "The output energy is " + str(run_dynamics_anal()) + "J."
 
     if mode == 'OPTIMIZE':
         max_energy = 0
